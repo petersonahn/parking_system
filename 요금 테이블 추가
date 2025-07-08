@@ -1,0 +1,10 @@
+CREATE TABLE parking_fee (
+    car_num VARCHAR2(20) NOT NULL,
+    in_time DATE NOT NULL,
+    out_time DATE,
+    fee_amount NUMBER,
+    CONSTRAINT pk_parking_fee PRIMARY KEY (car_num, in_time),
+    CONSTRAINT fk_parking_fee_cars FOREIGN KEY (car_num) REFERENCES cars(car_num)
+    -- 기본키: car_num + in_time → 같은 차량도 입차 시간이 다르면 중복 없이 여러 번 주차 가능. --
+    -- 외래키: car_num → cars 테이블에 등록된 차량만 저장 가능. --
+);
