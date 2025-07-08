@@ -1,5 +1,7 @@
+// 주차 기록 테이블
+
 create table parking_record(
-    parking_rec_num number(10) primary key, 
+    parking_rec_num number(10) primary key,        // 따로 의미는 없는 주차 기록 번호.
     car_num varchar2(20) not null,
     in_time date not null,
     out_time date,
