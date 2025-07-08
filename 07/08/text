@@ -1,1 +1,7 @@
-
+create table parking_record(
+    parking_rec_num number(10) primary key, 
+    car_num varchar2(20) not null,
+    in_time date not null,
+    out_time date,
+    user_id varchar2(20)
+);
