@@ -1,0 +1,120 @@
+# ParkingMapper 추가
+
+// 입차 시간 조회
+Date selectInTimeByCarNum(String car_num);
+
+// 출차 내역 insert
+int insertParkingFee(ParkingFeeDTO pfDto);
+
+// 출차 내역 update
+int updateParkingFee(ParkingFeeDTO pfDto);
+
+# parking.xml 추가
+
+<select id="selectInTimeByCarNum" resultType="java.util.Date" parameterType="String">
+  SELECT in_time FROM cars WHERE car_num = #{car_num}
+</select>
+
+<insert id="insertParkingFee" parameterType="ParkingFee">
+  INSERT INTO parking_fee (car_num, in_time, out_time, fee_amount)
+  VALUES (#{car_num}, #{in_time}, #{out_time}, #{fee_amount})
+</insert>
+
+<update id="updateParkingFee" parameterType="ParkingFee">
+  UPDATE parking_fee
+  SET out_time = #{out_time}, fee_amount = #{fee_amount}
+  WHERE car_num = #{car_num} AND in_time = #{in_time}
+</update>
+
+# mybatis-config 추가
+
+<typeAlias type="com.boot.parking.model.ParkingFeeDTO" alias="ParkingFee" />
+
+# ParkingFeeDTO.java 생성
+
+package com.boot.parking.model;
+
+import java.util.Date;
+import lombok.Data;
+
+@Data
+public class ParkingFeeDTO {
+    private String car_num;
+    private Date in_time;
+    private Date out_time;
+    private int fee_amount;
+}
+
+
+# ParkingController 수정
+@PostMapping("went_out_ok.go")
+	public void went_out_ok(@RequestParam("car_num") String car_num,
+	                        HttpServletResponse response) throws IOException {
+
+	    response.setContentType("text/html; charset=UTF-8");
+	    PrintWriter out = response.getWriter();
+
+	    // 1. 입차 시간 조회
+	    Date inTime = mapper.selectInTimeByCarNum(car_num);
+
+	    if(inTime == null) {
+	        out.println("<script>");
+	        out.println("alert('입차 기록이 없습니다.');");
+	        out.println("history.back();");
+	        out.println("</script>");
+	        return;
+	    }
+
+	    // 2. 출차 시간 = 현재 시간
+	    Date outTime = new Date();
+
+	    // 3. 주차 시간 계산 (분 단위)
+	    long Millis = outTime.getTime() - inTime.getTime();
+	    long Minutes = Millis / (1000 * 60);
+
+	    // 4. 요금 계산 예시
+	    int fee = 0;
+	    if(Minutes > 30) {  // 30분 무료
+	        fee = (int) (((Minutes - 30) / 10) + 1) * 1000;  // 10분당 1000원
+	    }
+
+	    // 5. 출차 내역 객체 생성
+	    ParkingFeeDTO pfDto = new ParkingFeeDTO();
+	    pfDto.setCar_num(car_num);
+	    pfDto.setIn_time(inTime);
+	    pfDto.setOut_time(outTime);
+	    pfDto.setFee_amount(fee);
+
+	    // 6. 출차 내역 insert or update (기존 출차 내역이 없으면 insert)
+	    int resInsert = mapper.insertParkingFee(pfDto);
+	    if(resInsert < 1) {
+	        // 이미 존재하면 update
+	        mapper.updateParkingFee(pfDto);
+	    }
+
+	    // 7. cars 테이블 출차 시간 업데이트
+	    int updateCount = mapper.out_time_update(car_num);
+
+	    if(updateCount > 0) {
+	        // 8. parking 테이블 출차 처리 (주차 공간 비우기)
+	        int deleteCount = mapper.out(car_num);
+
+	        if(deleteCount > 0) {
+	            out.println("<script>");
+	            out.println("alert('출차 처리 완료. 요금: " + fee + "원');");
+	            out.println("location.href='/'");
+	            out.println("</script>");
+	        } else {
+	            out.println("<script>");
+	            out.println("alert('주차 공간 비우기 오류');");
+	            out.println("history.back();");
+	            out.println("</script>");
+	        }
+	    } else {
+	        out.println("<script>");
+	        out.println("alert('출차 시간 업데이트 오류');");
+	        out.println("history.back();");
+	        out.println("</script>");
+	    }
+	}
+
