@@ -1,9 +1,44 @@
-// 주차 기록 테이블
+//
+<button onclick="location.href='list_car.go'">차 량<br>리스트</button>
+//
 
-create table parking_record(
-    parking_rec_num number(10) primary key,        // 따로 의미는 없는 주차 기록 번호.
-    car_num varchar2(20) not null,
-    in_time date not null,
-    out_time date,
-    user_id varchar2(20)
-);
+//
+<typeAlias type="com.boot.parking.model.Page" alias="page" />
+//
+
+@GetMapping("list_car.go")
+	public String car_list(Model model) {
+	  
+	    List<Parking_recordDTO> car_list = this.mapper.car_list();
+
+	    model.addAttribute("carList", car_list);
+
+	    return "list";  
+	}
+
+//
+
+<select id="car_list1" parameterType="page" resultType="Parking_record">
+  		<![CDATA[
+  	
+			select * from
+				(select row_number()
+					over(order by parking_rec_num desc) rnum, b.* from parking_record b)
+						where rnum >= #{startNo} and rnum <= #{endNo}
+  		]]>
+	</select>
+
+		
+	<select id="count" resultType="int">
+		select count(*) from parking_record
+	</select>
+
+
+	<select id="car_list" resultType="Parking_record">
+		select * from parking_record order by parking_rec_num desc
+	</select>
+
+ //
+
+
+ 
