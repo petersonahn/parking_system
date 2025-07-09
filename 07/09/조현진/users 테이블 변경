@@ -1,0 +1,8 @@
+-- 기존 users 테이블은 삭제해주세요.
+
+create table users(
+    user_car_num varchar2(20) primary key,
+    user_id varchar2(20) not null,
+    user_name varchar2(20) not null,
+    user_phone varchar2(20) not null
+);
