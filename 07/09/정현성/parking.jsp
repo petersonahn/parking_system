@@ -7,20 +7,7 @@
 <head>
 <meta charset="UTF-8">
 <style>
-	.car-num-box {
-    margin: 30px auto 10px;
-    padding: 15px 25px;
-    font-size: 24px;
-    font-weight: bold;
-    color: #2d6ac0;
-    background-color: #fff;
-    border: 2px solid #3498db;
-    border-radius: 10px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-    width: fit-content;
-    text-align: center;
-	}
-	
+		
     body {
         background-color: #eaf3fb;
         font-family: 'Segoe UI', '맑은 고딕', sans-serif;
