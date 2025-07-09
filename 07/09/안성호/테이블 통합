@@ -2,11 +2,7 @@
 ALTER TABLE parking_record ADD fee_amount NUMBER;
 
 -- parking_record_pk 시퀀스 새로 생성 (만약 기존에 없으면)
-CREATE SEQUENCE seq_parking_record
- START WITH 1
- INCREMENT BY 1
- NOCACHE
- NOCYCLE;
+CREATE SEQUENCE seq_parking_record START WITH 1;
 
 -- 시퀀스 트리거 (입차 시 pk 자동 생성용)
 CREATE OR REPLACE TRIGGER trg_parking_record_id
@@ -18,5 +14,6 @@ BEGIN
     END IF;
 END;
 /
+commit;
 
 parking_fee 테이블은 삭제.
