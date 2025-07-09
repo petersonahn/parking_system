@@ -1,0 +1,51 @@
+업데이트 상황 
+
+parking controller. java 파일에 
+
+
+
+@GetMapping("manager_detail.go")
+	public String managerDetail(Model model){
+		
+			List<ParkingDTO> parkingList = mapper.pList(); // 현재 주차 현황
+			List<ParkingRecordDTO> parkingRecords = mapper.parkingRecords(); // 주차 기록
+
+			
+			model.addAttribute("parkingList", parkingList);
+			model.addAttribute("parkingRecords", parkingRecords);
+		
+		return "manager_detail";
+		
+	}
+
+ 추가   
+
+
+
+parkingmapper.java 파일에 
+
+
+// 주차 기록 조회
+	List<ParkingRecordDTO> parkingRecords();
+	
+추가 
+
+
+parking.xml 파일에
+
+
+<select id="parkingRecords" resultType="Record">
+		select * from parking_record order by parking_rec_num desc
+	</select>
+
+추가 
+
+
+
++ manager_detail.jsp 추가
+
+
+manager_detail.jsp 
+
+현 주차 현황 및, 주차 상세내용을 자동차번호를 클릭해 모달창으로 띄우는 기능 추가 
+
