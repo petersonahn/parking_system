@@ -1,0 +1,2 @@
+insert into parking_fee values(0, 30, 1000, 10, 0);
+commit;
