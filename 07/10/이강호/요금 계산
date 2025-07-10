@@ -1,4 +1,59 @@
-ParkingFeeDTO fee = this.mapper.selectParkingFee(); 
+
+_____________________________________________________________________________________________________________________
+
+// parking.xml 추가
+
+
+<select id="selectParkingFee" resultType="Fee">
+		select * from parking_fee
+	</select>
+
+
+
+
+
+___________________________________________________________________________________
+
+// mybatis-config.xml 추가 
+
+		<typeAlias type="com.boot.parking.model.ParkingFee" alias="Fee" />
+
+
+
+
+____________________________________________________________________________________________________
+
+
+
+
+// PakingFeeDTO 복사 붙여넣기
+
+package com.boot.parking.model;
+
+import java.util.Date;
+import lombok.Data;
+
+@Data
+public class ParkingFeeDTO {
+    private int base_fee;             // 기본요금
+    private int base_minutes;         // 기본요금 적용 시간
+    private int hourly_fee;           // 시간당 요금
+    private int unit_minutes;         // 요금 부과 단위
+    private int max_fee_per_day;	  // 일 최대 요금
+}
+
+
+
+____________________________________________________________________________________________________
+
+
+// 컨트롤러 클래스에 해당 부분만 복사 붙여넣기
+
+	@PostMapping("went_out_ok.go")
+	public void went_out_ok(@RequestParam("car_num") String car_num,
+	                        HttpServletResponse response) throws IOException {
+		
+		ParkingFeeDTO fee = this.mapper.selectParkingFee(); 
 		ParkingFeeDTO feeDTO = new ParkingFeeDTO();
 		
 		feeDTO.setBase_fee(fee.getBase_fee());
@@ -13,8 +68,43 @@ ParkingFeeDTO fee = this.mapper.selectParkingFee();
 		int unitMinutes = feeDTO.getUnit_minutes();
 		int maxFeePerDay = feeDTO.getMax_fee_per_day();
 
+	    response.setContentType("text/html; charset=UTF-8");
+	    PrintWriter out = response.getWriter();
 
-if (minutes > unitMinutes) {
-	        fee = (int) (Math.floor((double) ((minutes - baseMinutes) / unitMinutes))) * hourlyFee;
+	    Date inTime = mapper.selectInTimeByCarNum(car_num);
+
+	    if (inTime == null) {
+	        out.println("<script>");
+	        out.println("alert('입차 기록이 없습니다.');");
+	        out.println("history.back();");
+	        out.println("</script>");
+	        return;
+	    }
+
+	    Date outTime = new Date();
+
+	    long millis = outTime.getTime() - inTime.getTime();
+	    long minutes = millis / (1000 * 60);
+
+	    int totalfee = 0;
+	    if (minutes > unitMinutes) {
+	        totalfee = (int) (Math.floor((double) ((minutes - baseMinutes) / unitMinutes))) * hourlyFee;
 	        
 	    }
+
+	    // parking_record 조회해서 PK 가져오기 (별도 메서드 필요)
+	    int parkingRecNum = mapper.selectRecordNumByCarNumAndInTime(car_num, inTime);
+	    if (parkingRecNum == 0) {
+	        out.println("<script>");
+	        out.println("alert('주차 기록이 없습니다.');");
+	        out.println("history.back();");
+	        out.println("</script>");
+	        return;
+	    }
+
+	    ParkingRecordDTO record = new ParkingRecordDTO();
+	    record.setParking_rec_num(parkingRecNum);
+	    record.setCar_num(car_num);
+	    record.setIn_time(inTime);
+	    record.setOut_time(outTime);
+	    record.setFee_amount(totalfee);
