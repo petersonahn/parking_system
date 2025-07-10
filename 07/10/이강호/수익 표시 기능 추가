@@ -1,0 +1,46 @@
+// parking.xml 추가
+
+
+	<select id="amountfee" resultType="int">
+		SELECT SUM(fee_amount)
+		FROM parking_record
+	</select>
+
+_____________________________________________________________________________________________
+
+// 컨트롤러 클래스 (해당 부분 톡사 붙여넣기)
+
+@GetMapping("list_car.go")
+	public String car_list(@RequestParam(value = "page", defaultValue = "1") int page,
+	                       Model model) {
+		
+		totalRecord = this.mapper.count();
+		
+		int amountfee = this.mapper.amountfee();
+		
+	    Page pdto = new Page(page, rowsize, totalRecord);
+
+	    List<ParkingRecordDTO> carList = mapper.car_list(pdto);
+
+	    model.addAttribute("carList", carList);
+	    model.addAttribute("paging", pdto);
+	    model.addAttribute("amountfee", amountfee);
+
+	    return "list";
+	}
+
+
+_____________________________________________________________________________________________
+
+// ParkingRecordDTO 수정
+
+private Integer fee_amount; 해당 부분 타입을 int에서 Integer로 변환(정기권 차량은 null값이 들어올 수 있음)
+
+_____________________________________________________________________________________________
+
+// list.jsp 추가(기간별 수익 기능 추가 예정)
+
+
+		<h5>수익 총액 : ${ amountfee }원</h5>
+		
+	
