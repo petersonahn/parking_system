@@ -86,12 +86,12 @@ int updateFee(ParkingFeeDTO fee);
 </select>
 
 <update id="updateFee" parameterType="ParkingFeeDTO">
-    update parking_fee set
+	    update parking_fee set
         base_fee = #{base_fee},
         base_minutes = #{base_minutes},
         hourly_fee = #{hourly_fee},
         unit_minutes = #{unit_minutes},
-        max_fee_per_day = #{max_fee_per_day}
+        max_fee_per_day = #{max_fee_per_day, jdbcType=NUMERIC} <!-- 공백처리 -->
 </update>
 
 
