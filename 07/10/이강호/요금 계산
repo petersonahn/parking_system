@@ -53,14 +53,14 @@ ________________________________________________________________________________
 	public void went_out_ok(@RequestParam("car_num") String car_num,
 	                        HttpServletResponse response) throws IOException {
 		
-		ParkingFeeDTO fee = this.mapper.selectParkingFee(); 
+		ParkingFeeDTO dfee = this.mapper.selectParkingFee(); 
 		ParkingFeeDTO feeDTO = new ParkingFeeDTO();
 		
-		feeDTO.setBase_fee(fee.getBase_fee());
-		feeDTO.setBase_minutes(fee.getBase_minutes());
-		feeDTO.setHourly_fee(fee.getHourly_fee());
-		feeDTO.setUnit_minutes(fee.getUnit_minutes());
-		feeDTO.setMax_fee_per_day(fee.getMax_fee_per_day());
+		feeDTO.setBase_fee(dfee.getBase_fee());
+		feeDTO.setBase_minutes(dfee.getBase_minutes());
+		feeDTO.setHourly_fee(dfee.getHourly_fee());
+		feeDTO.setUnit_minutes(dfee.getUnit_minutes());
+		feeDTO.setMax_fee_per_day(dfee.getMax_fee_per_day());
 		
 		int baseMinutes = feeDTO.getBase_minutes();
 		int baseFee = feeDTO.getBase_fee();
@@ -86,10 +86,18 @@ ________________________________________________________________________________
 	    long millis = outTime.getTime() - inTime.getTime();
 	    long minutes = millis / (1000 * 60);
 
-	    int totalfee = 0;
-	    if (minutes > unitMinutes) {
-	        totalfee = (int) (Math.floor((double) ((minutes - baseMinutes) / unitMinutes))) * hourlyFee;
-	        
+	    int fee = 0;
+	    
+	    if (minutes > 1440) {
+	        fee = (int) (Math.floor((double) (minutes / 1440))) * maxFeePerDay;
+	    }else {
+	    	if (minutes > unitMinutes) {
+	    		fee = (int) (Math.floor((double) ((minutes - baseMinutes) / unitMinutes))) * hourlyFee;
+	    		
+	    	}else {
+	    		fee = baseFee;
+	    	}
+	    	
 	    }
 
 	    // parking_record 조회해서 PK 가져오기 (별도 메서드 필요)
@@ -107,4 +115,28 @@ ________________________________________________________________________________
 	    record.setCar_num(car_num);
 	    record.setIn_time(inTime);
 	    record.setOut_time(outTime);
-	    record.setFee_amount(totalfee);
+	    record.setFee_amount(fee);
+
+	    int updateCount = mapper.record_out(record);
+
+	    if (updateCount > 0) {
+	        int delParking = mapper.out(car_num);           // parking 테이블 car_num null 처리
+
+	        if (delParking > 0) {
+	            out.println("<script>");
+	            out.println("alert('출차 완료. 요금: " + fee + "원');");
+	            out.println("location.href='/'");
+	            out.println("</script>");
+	        } else {
+	            out.println("<script>");
+	            out.println("alert('출차 처리 오류');");
+	            out.println("history.back();");
+	            out.println("</script>");
+	        }
+	    } else {
+	        out.println("<script>");
+	        out.println("alert('주차 기록 업데이트 실패');");
+	        out.println("history.back();");
+	        out.println("</script>");
+	    }
+	}
