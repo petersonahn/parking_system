@@ -16,7 +16,7 @@ ________________________________________________________________________________
 
 // mybatis-config.xml 추가 
 
-		<typeAlias type="com.boot.parking.model.ParkingFee" alias="Fee" />
+		<typeAlias type="com.boot.parking.model.ParkingFeeDTO" alias="Fee" />
 
 
 
