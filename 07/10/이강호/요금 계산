@@ -1,0 +1,20 @@
+ParkingFeeDTO fee = this.mapper.selectParkingFee(); 
+		ParkingFeeDTO feeDTO = new ParkingFeeDTO();
+		
+		feeDTO.setBase_fee(fee.getBase_fee());
+		feeDTO.setBase_minutes(fee.getBase_minutes());
+		feeDTO.setHourly_fee(fee.getHourly_fee());
+		feeDTO.setUnit_minutes(fee.getUnit_minutes());
+		feeDTO.setMax_fee_per_day(fee.getMax_fee_per_day());
+		
+		int baseMinutes = feeDTO.getBase_minutes();
+		int baseFee = feeDTO.getBase_fee();
+		int hourlyFee = feeDTO.getHourly_fee();
+		int unitMinutes = feeDTO.getUnit_minutes();
+		int maxFeePerDay = feeDTO.getMax_fee_per_day();
+
+
+if (minutes > unitMinutes) {
+	        fee = (int) (Math.floor((double) ((minutes - baseMinutes) / unitMinutes))) * hourlyFee;
+	        
+	    }
