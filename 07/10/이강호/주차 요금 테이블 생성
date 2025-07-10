@@ -1,0 +1,11 @@
+
+주차 요금 테이블 생성
+
+create table parking_fee(
+    base_fee NUMBER DEFAULT 1000 NOT NULL,                -- 기본요금
+    base_minutes NUMBER DEFAULT 30 NOT NULL,              -- 기본요금 적용 시간
+    hourly_fee NUMBER DEFAULT 500 NOT NULL,               -- 시간당 요금
+    unit_minutes NUMBER DEFAULT 10 NOT NULL,              -- 요금 부과 단위
+    max_fee_per_day NUMBER                                -- 1일 최대 요금
+);
+commit;
