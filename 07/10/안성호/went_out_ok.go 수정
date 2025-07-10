@@ -1,15 +1,37 @@
-ParkingFeeDTO feePolicy = mapper.getFee();
+@PostMapping("went_out_ok.go")
+	public void went_out_ok(@RequestParam("car_num") String car_num,
+	                        HttpServletResponse response) throws IOException {
 
-int fee = 0;
+	    response.setContentType("text/html; charset=UTF-8");
+	    PrintWriter out = response.getWriter();
+
+	    Date inTime = mapper.selectInTimeByCarNum(car_num);
+
+	    if (inTime == null) {
+	        out.println("<script>");
+	        out.println("alert('입차 기록이 없습니다.');");
+	        out.println("history.back();");
+	        out.println("</script>");
+	        return;
+	    }
+
+	    Date outTime = new Date();
+
+	    long millis = outTime.getTime() - inTime.getTime();
+	    long minutes = millis / (1000 * 60);
 	    
-if (minutes > 1440) {
-    fee = (int) (Math.floor((double) (minutes / 1440))) * feePolicy.getMax_fee_per_day();
-}else {
-  if (minutes > feePolicy.getBase_minutes()) {
-    fee = (int) (Math.floor((double) ((minutes - feePolicy.getBase_minutes()) / feePolicy.getBase_minutes()))) * feePolicy.getHourly_fee();
-    
-  }else {
-    fee = feePolicy.getBase_fee();
-  }
-  
-}
+	    ParkingFeeDTO feePolicy = mapper.getFee();
+
+	    int fee = 0;
+	    
+	    if (minutes > 1440) {
+	        fee = (int) (Math.floor((double) (minutes / 1440))) * feePolicy.getMax_fee_per_day();
+	    }else {
+	    	if (minutes > feePolicy.getBase_minutes()) {
+	    		fee = (int) (Math.floor((double) ((minutes - feePolicy.getBase_minutes()) / feePolicy.getBase_minutes()))) * feePolicy.getHourly_fee();
+	    		
+	    	}else {
+	    		fee = feePolicy.getBase_fee();
+	    	}
+	    	
+	    }
