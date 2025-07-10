@@ -1,0 +1,37 @@
+# fee_edit.jsp
+
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %> 
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>요금 정책 수정</title>
+</head>
+<body>
+    <h1>요금 정책 수정</h1>
+    
+    <form action="fee_update.go" method="post">
+        기본요금 (기본 30분까지): 
+        <input type="number" name="base_fee" value="${fee.base_fee}" required /> 원<br><br>
+        
+        기본요금 적용 시간(분): 
+        <input type="number" name="base_minutes" value="${fee.base_minutes}" required /> 분<br><br>
+        
+        시간당 요금 (10분 단위): 
+        <input type="number" name="hourly_fee" value="${fee.hourly_fee}" required /> 원<br><br>
+        
+        요금 부과 단위(분): 
+        <input type="number" name="unit_minutes" value="${fee.unit_minutes}" required /> 분<br><br>
+        
+        1일 최대 요금 (없으면 0 또는 공백): 
+        <input type="number" name="max_fee_per_day" value="${fee.max_fee_per_day}" /><br><br>
+        
+        <input type="submit" value="수정 완료" />
+    </form>
+    
+    <button onclick="location.href='manager_home.go'">뒤로가기</button>
+</body>
+</html>
+
