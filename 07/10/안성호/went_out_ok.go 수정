@@ -1,0 +1,15 @@
+ParkingFeeDTO feePolicy = mapper.getFee();
+
+int fee = 0;
+	    
+if (minutes > 1440) {
+    fee = (int) (Math.floor((double) (minutes / 1440))) * feePolicy.getMax_fee_per_day();
+}else {
+  if (minutes > feePolicy.getBase_minutes()) {
+    fee = (int) (Math.floor((double) ((minutes - feePolicy.getBase_minutes()) / feePolicy.getBase_minutes()))) * feePolicy.getHourly_fee();
+    
+  }else {
+    fee = feePolicy.getBase_fee();
+  }
+  
+}
