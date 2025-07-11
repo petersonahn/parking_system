@@ -1,0 +1,6 @@
+<update id="record_out" parameterType="Record">
+	    update parking_record
+	    set out_time = #{out_time},
+	    	fee_amount = #{fee_amount}
+	    where car_num = #{car_num} and in_time = #{in_time}
+	</update>
