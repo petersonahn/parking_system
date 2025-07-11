@@ -100,11 +100,31 @@
 	
 	function modify(user_id, user_car_num, user_name, user_phone) {
 		
+		$(document).ready(function() {
+			
+			$(".userModForm").submit(function(e) {
+				
+				if($("#mod_user_name").val().trim() === "") {
+					alert("회원 이름을 입력하세요.");
+					$("#mod_user_name").focus();
+					e.preventDefault();
+				}
+				
+				else if($("#mod_user_phone").val().trim() === "") {
+					alert("회원 연락처를 입력하세요.");
+					$("#mod_user_phone").focus();
+					e.preventDefault();
+				}
+				
+			});
+			
+		});
+		
 		let mod_html = "<div>";
         mod_html += "<h2>회원 정보 수정</h2>";
         mod_html += "</div>";
         
-        mod_html += "<form method='post' action='user_modify.go'>";
+        mod_html += "<form class='userModForm' method='post' action='user_modify.go'>";
 		mod_html += "<div><table border='1'>";
 		
 		mod_html += "<tr>";
@@ -121,13 +141,13 @@
 		
 		mod_html += "<tr>";
 		mod_html += "<th>회원 이름</th>";
-		mod_html += "<td><input name='user_name' value="+user_name+">";
+		mod_html += "<td><input id='mod_user_name' name='user_name' value="+user_name+">";
 		mod_html += "</input></td>";
 		mod_html += "</tr>";
 		
 		mod_html += "<tr>";
 		mod_html += "<th>회원 연락처</th>";
-		mod_html += "<td><input name='user_phone' value="+user_phone+">";
+		mod_html += "<td><input id='mod_user_phone' name='user_phone' value="+user_phone+">";
 		mod_html += "</input></td>";
 		mod_html += "</tr>";
 		
@@ -146,6 +166,8 @@
 		document.getElementById("modModal").style.display = "block";
 		
 	}
+	
+	
 	
 	function showUserRegModal() {
 		document.getElementById("userRegModal").style.display = "block";
