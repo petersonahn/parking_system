@@ -1,0 +1,191 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>    
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+	body {
+	  margin: 0;
+	  padding: 40px;
+	  background-color: #eaf3fb;
+	  font-family: 'Segoe UI', '맑은 고딕', sans-serif;
+	}
+	
+	h1 {
+	  text-align: center;
+	  color: #2d6ac0;
+	  margin-top: 20px;
+	  margin-bottom: 40px;
+	  font-weight: 700;
+	}
+	
+	.zone-wrapper {
+	  display: flex;
+	  justify-content: center;
+	  gap: 80px; /* A/B 사이 간격 */
+	  margin-top: 30px;
+	  flex-wrap: wrap;
+	}
+	
+	.zone {
+	  width: 550px;
+	}
+	
+	.zone-title {
+	  text-align: center;
+	  color: #2d6ac0;
+	  font-size: 20px;
+	  font-weight: bold;
+	  margin-bottom: 16px;
+	}
+	
+
+	.parking-container {
+	  display: grid;
+	  grid-template-columns: repeat(5, 1fr); 
+	  gap: 14px;
+	  justify-items: center;
+	}
+	
+	.parking-card {
+	  background: white;
+	  border-radius: 12px;
+	  padding: 14px 0;
+	  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+	  width: 100%;
+	  text-align: center;
+	  transition: transform 0.2s;
+	}
+	
+	.parking-card:hover {
+	  transform: translateY(-4px);
+	}
+	
+	.parking-id {
+	  font-size: 17px;          
+	  color: #4a4a4a;            
+	  font-weight: 700;          
+	  margin-bottom: 8px;
+	}
+	
+	.car-num {
+	  font-size: 18px;
+	  font-weight: bold;
+	  color: #007BFF;
+	  cursor: pointer;
+	}
+	
+	.car-num:hover {
+	  text-decoration: underline;
+	}
+	
+	.empty {
+	  font-size: 17px;
+	  color: #bbb;
+	}
+
+</style>
+
+
+<!-- JS 데이터 전달 -->
+<script>
+	 const records = [
+	   <c:forEach var="r" items="${parkingRecords}" varStatus="vs">
+	   {
+	     num: "${r.parking_rec_num}",
+	     car: "${r.car_num}",
+	     in: "${r.in_time}",
+	     out: "${r.out_time != null ? r.out_time : '출차 전'}",
+	     user: "${r.user_id}"
+	   }<c:if test="${!vs.last}">,</c:if>
+	   </c:forEach>
+	 ];
+	
+	 function showModal(carNum) {
+	   	const list = records.filter(r => r.car === carNum);
+	  			 let html = `<table border="1" width="100%">
+	    		 <tr><th>기록번호</th><th>입차</th><th>출차</th><th>회원</th></tr>`;
+	  			 list.forEach(r => {
+	    			 html += `<tr>
+	      		 <td>${r.num}</td><td>${r.in}</td><td>${r.out}</td><td>${r.user}</td>
+	    		 </tr>`;
+	   });
+	  		 html += `</table>`;
+	  	 document.getElementById('recordTable').innerHTML = html;
+	  	 document.getElementById('modal').style.display = 'block';
+	 }
+	
+	 function hideModal() {
+	  	 document.getElementById('modal').style.display = 'none';
+	 }
+	 
+	 
+</script>
+<title>주차 현황 조회</title>
+	
+</head>
+<body>
+		<h1>현재 주차 현황</h1>
+
+		<div class="zone-wrapper">
+		  <!-- A구역 -->
+		  <div class="zone">
+		    <div class="zone-title">A구역</div>
+		    <div class="parking-container">
+		      <c:forEach var="p" items="${parkingList}" varStatus="status">
+		        <c:if test="${status.index < 50}">
+		          <div class="parking-card">
+		            <div class="parking-id">${p.parking_id}</div>
+		            <c:choose>
+		              <c:when test="${p.car_num != null}">
+		                <div class="car-num" onclick="showModal('${p.car_num}')">${p.car_num}</div>
+		              </c:when>
+		              <c:otherwise>
+		                <div class="empty">비어있음</div>
+		              </c:otherwise>
+		            </c:choose>
+		          </div>
+		        </c:if>
+		      </c:forEach>
+		    </div>
+		  </div>
+		
+		  <!-- B구역 -->
+		  <div class="zone">
+		    <div class="zone-title">B구역</div>
+		    <div class="parking-container">
+		      <c:forEach var="p" items="${parkingList}" varStatus="status">
+		        <c:if test="${status.index >= 50 && status.index < 100}">
+		          <div class="parking-card">
+		            <div class="parking-id">${p.parking_id}</div>
+		            <c:choose>
+		              <c:when test="${p.car_num != null}">
+		                <div class="car-num" onclick="showModal('${p.car_num}')">${p.car_num}</div>
+		              </c:when>
+		              <c:otherwise>
+		                <div class="empty">비어있음</div>
+		              </c:otherwise>
+		            </c:choose>
+		          </div>
+		        </c:if>
+		      </c:forEach>
+		    </div>
+		  </div>
+		</div>
+
+			
+			<!-- 모달창 HTML  -->
+			<div id="modal" style="display:none; position:fixed; left:0; top:0; width:100%; height:100%; background:#00000088;">
+			  <div style="background:white; width:500px; margin:100px auto; padding:20px; border-radius:10px;">
+			    <button onclick="hideModal()" style="float:right;">닫기</button>
+			    <h3>차량 입출차 기록</h3>
+			    <div id="recordTable"></div>
+			  </div>
+			</div>
+			
+			
+			
+</body>
+</html>
