@@ -146,8 +146,8 @@
 
 		<!-- 주요 버튼 -->
 		<div class="body">
-			<button onclick="location.href='came_in.go'">입 차</button>
-			<button onclick="location.href='went_out.go'">출 차</button>
+			<button onclick="location.href='parking_in.go'">입 차</button>
+			<button onclick="location.href='parking_out.go'">출 차</button>
 			<button onclick="location.href='search_car.go'">차 량<br>조 회</button>
 		</div>
 		
