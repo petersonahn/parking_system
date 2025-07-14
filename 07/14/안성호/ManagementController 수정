@@ -1,0 +1,325 @@
+package com.boot.parking.controller;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import com.boot.parking.model.*;
+
+@Controller
+public class ManagementController {
+
+    @Autowired
+    private ParkingMapper mapper;
+
+    // 관리자 로그인 화면
+    @GetMapping("manager_login.go")
+    public String loginForm() {
+        return "parking_management/manager_login";
+    }
+
+    // 관리자 로그인 처리
+    @PostMapping("manager_login_ok")
+    public void loginOk(@RequestParam("manager_id") String id,
+                        @RequestParam("manager_pwd") String pwd,
+                        HttpSession session,
+                        HttpServletResponse response) throws IOException {
+
+        response.setContentType("text/html; charset=UTF-8");
+        PrintWriter out = response.getWriter();
+
+        ManagerDTO dto = new ManagerDTO();
+        dto.setManager_id(id);
+        dto.setManager_pwd(pwd);
+
+        ManagerDTO result = mapper.login(dto);
+
+        if (result != null) {
+            session.setAttribute("manager_id", id);
+            out.println("<script>");
+            out.println("location.href='manager_main.go';");
+            out.println("</script>");
+        } else {
+            out.println("<script>");
+            out.println("alert('아이디 또는 비밀번호가 틀립니다.');");
+            out.println("history.back();");
+            out.println("</script>");
+        }
+    }
+
+    // 로그아웃 처리
+    @GetMapping("logout.go")
+    public void logout(HttpSession session, HttpServletResponse response) throws IOException {
+        session.invalidate();
+
+        response.setContentType("text/html; charset=UTF-8");
+        PrintWriter out = response.getWriter();
+
+        out.println("<script>");
+        out.println("alert('로그아웃 되었습니다.');");
+        out.println("location.href='/'");
+        out.println("</script>");
+    }
+
+    // 세션 체크 메서드 (중복 코드 방지용)
+    private boolean isLoggedIn(HttpSession session) {
+        return session != null && session.getAttribute("manager_id") != null;
+    }
+
+    // 로그인 체크 + alert + 리다이렉트 처리 메서드
+    private void sendLoginAlertAndRedirect(HttpSession session, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            response.setContentType("text/html; charset=UTF-8");
+            PrintWriter out = response.getWriter();
+            out.println("<script>");
+            out.println("alert('로그인 후 이용해주세요.');");
+            out.println("location.href='manager_login.go';");
+            out.println("</script>");
+            out.flush();
+        }
+    }
+
+    // 관리자 메인 페이지
+    @GetMapping("manager_main.go")
+    public String managerMain(HttpSession session, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            sendLoginAlertAndRedirect(session, response);
+            return null;
+        }
+        return "parking_management/manager_main";
+    }
+
+    // 주차 현황 조회
+    @GetMapping("parking_status.go")
+    public String parkingStatus(Model model, HttpSession session, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            sendLoginAlertAndRedirect(session, response);
+            return null;
+        }
+
+        List<ParkingDTO> parkingList = mapper.pList();
+        List<ParkingRecordDTO> parkingRecords = mapper.parkingRecords();
+
+        model.addAttribute("parkingList", parkingList);
+        model.addAttribute("parkingRecords", parkingRecords);
+
+        return "parking_management/parking_status";
+    }
+
+    // 회원 관리
+    @GetMapping("user_management.go")
+    public String userManage(Model model, HttpSession session, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            sendLoginAlertAndRedirect(session, response);
+            return null;
+        }
+
+        List<UsersDTO> userList = mapper.userList();
+        model.addAttribute("userList", userList);
+        return "parking_management/user_management";
+    }
+
+    // 회원 등록 폼
+    @GetMapping("user_registration.go")
+    public String userRegistration(HttpSession session, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            sendLoginAlertAndRedirect(session, response);
+            return null;
+        }
+        return "parking_management/user_registration";
+    }
+
+    // 회원 등록 처리
+    @PostMapping("user_registration_ok.go")
+    public void userRegistrationOk(UsersDTO udto, HttpSession session, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            sendLoginAlertAndRedirect(session, response);
+            return;
+        }
+
+        response.setContentType("text/html; charset=UTF-8");
+        PrintWriter out = response.getWriter();
+
+        UsersDTO user_check = mapper.user_info(udto.getUser_car_num());
+
+        if (user_check != null) {
+            out.println("<script>");
+            out.println("alert('이미 등록된 차량번호입니다.');");
+            out.println("history.back();");
+            out.println("</script>");
+        } else {
+            int reg_user = mapper.registration_user(udto);
+
+            if (reg_user > 0) {
+                out.println("<script>");
+                out.println("alert('회원을 등록하였습니다.');");
+                out.println("location.href='user_management.go';");
+                out.println("</script>");
+            } else {
+                out.println("<script>");
+                out.println("alert('회원 등록 과정 중 오류 발생');");
+                out.println("history.back();");
+                out.println("</script>");
+            }
+        }
+    }
+
+    // 회원 정보 수정 처리
+    @PostMapping("user_modify.go")
+    public void userModifyOk(UsersDTO udto, HttpSession session, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            sendLoginAlertAndRedirect(session, response);
+            return;
+        }
+
+        response.setContentType("text/html; charset=UTF-8");
+        PrintWriter out = response.getWriter();
+
+        int user_modify_chk = mapper.userModify(udto);
+
+        if (user_modify_chk > 0) {
+            out.println("<script>");
+            out.println("alert('회원 정보 수정을 완료하였습니다.');");
+            out.println("location.href='user_management.go';");
+            out.println("</script>");
+        } else {
+            out.println("<script>");
+            out.println("alert('회원 정보 수정 중 오류 발생');");
+            out.println("history.back();");
+            out.println("</script>");
+        }
+    }
+
+    // 회원 삭제 처리
+    @GetMapping("user_delete.go")
+    public void userDelete(@RequestParam("user_car_num") String user_car_num,
+                           HttpSession session,
+                           HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            sendLoginAlertAndRedirect(session, response);
+            return;
+        }
+
+        response.setContentType("text/html; charset=UTF-8");
+        PrintWriter out = response.getWriter();
+
+        int user_delete_check = mapper.userDelete(user_car_num);
+
+        if (user_delete_check > 0) {
+            out.println("<script>");
+            out.println("alert('회원 정보를 삭제하였습니다.');");
+            out.println("location.href='user_management.go';");
+            out.println("</script>");
+        } else {
+            out.println("<script>");
+            out.println("alert('회원 정보 삭제 중 오류 발생');");
+            out.println("history.back();");
+            out.println("</script>");
+        }
+    }
+
+    // 요금 관리 페이지
+    @GetMapping("parking_fee_edit.go")
+    public String feeEdit(Model model, HttpSession session, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            sendLoginAlertAndRedirect(session, response);
+            return null;
+        }
+
+        ParkingFeeDTO fee = mapper.getFee();
+        model.addAttribute("fee", fee);
+        return "parking_management/parking_fee_edit";
+    }
+
+    // 요금 수정 처리
+    @PostMapping("parking_fee_update.go")
+    public void feeUpdate(ParkingFeeDTO fee, HttpSession session, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            sendLoginAlertAndRedirect(session, response);
+            return;
+        }
+
+        response.setContentType("text/html; charset=UTF-8");
+        PrintWriter out = response.getWriter();
+
+        int result = mapper.updateFee(fee);
+
+        if (result > 0) {
+            out.println("<script>");
+            out.println("alert('요금 정책이 수정되었습니다.');");
+            out.println("location.href='manager_main.go';");
+            out.println("</script>");
+        } else {
+            out.println("<script>");
+            out.println("alert('수정 중 오류가 발생했습니다.');");
+            out.println("history.back();");
+            out.println("</script>");
+        }
+    }
+
+    // 주차 기록 리스트 조회
+    private final int rowsize = 10;
+    private int totalRecord = 0;
+
+    @GetMapping("parking_record_list.go")
+    public String carList(@RequestParam(value = "page", defaultValue = "1") int page,
+                          Model model, HttpSession session, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            sendLoginAlertAndRedirect(session, response);
+            return null;
+        }
+
+        totalRecord = mapper.count();
+        int amountfee = mapper.amountfee();
+
+        Page pdto = new Page(page, rowsize, totalRecord);
+
+        List<ParkingRecordDTO> carList = mapper.car_list(pdto);
+
+        model.addAttribute("carList", carList);
+        model.addAttribute("paging", pdto);
+        model.addAttribute("amountfee", amountfee);
+
+        return "parking_management/parking_record_list";
+    }
+
+    // 주차 기록 검색
+    @RequestMapping("parking_record_search.go")
+    public String carListSearch(@RequestParam(value = "page", defaultValue = "1") int page,
+                                @RequestParam("field") String field,
+                                @RequestParam(value = "keyword", required = false) String keyword,
+                                Model model, HttpSession session, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(session)) {
+            sendLoginAlertAndRedirect(session, response);
+            return null;
+        }
+
+        Map<String, String> map = new HashMap<>();
+        map.put("field", field);
+        map.put("keyword", keyword);
+
+        totalRecord = mapper.scount(map);
+        Integer amountfee = mapper.searchamountfee(map);
+
+        Page pdto = new Page(page, rowsize, totalRecord, field, keyword);
+
+        List<ParkingRecordDTO> carsearchList = mapper.carlist_search(pdto);
+
+        model.addAttribute("SearchList", carsearchList)
+             .addAttribute("paging", pdto)
+             .addAttribute("amountfee", amountfee);
+
+        return "parking_management/parking_record_search";
+    }
+}
+
