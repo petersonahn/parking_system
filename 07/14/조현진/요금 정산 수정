@@ -1,0 +1,117 @@
+// parking_controller 에서 parking_out_ok.go 수정.
+// 회원차량, 입차한지 24시간이 지난 차량에 대한 정산 방식 및 출력 내용 수정.
+
+@PostMapping("parking_out_ok.go")
+	public void went_out_ok(@RequestParam("car_num") String car_num,
+	                        HttpServletResponse response) throws IOException {
+
+		response.setContentType("text/html; charset=UTF-8");
+	    PrintWriter out = response.getWriter();
+
+	    Date inTime = mapper.selectInTimeByCarNum(car_num);
+
+	    if (inTime == null) {
+	        out.println("<script>");
+	        out.println("alert('입차 기록이 존재하지 않습니다.');");
+	        out.println("history.back();");
+	        out.println("</script>");
+	        return;
+	    }
+
+	    Date outTime = new Date();
+
+	    long millis = outTime.getTime() - inTime.getTime();
+	    long minutes = millis / (1000 * 60);
+	    
+	    ParkingFeeDTO feePolicy = mapper.getFee();
+
+	    int fee = 0;
+	    int fee_0 = 0;
+	    int fee_1 = 0;
+	    boolean user_check = false;
+	    
+	    UsersDTO user_info = this.mapper.user_info(car_num);
+	    
+	    if(user_info == null) {
+	    	// 출차하고자 하는 차량이 회원으로 등록된 차량이 아닌 경우.
+	    	
+	    	if (minutes > 1440) {
+		        fee_0 = (int)(Math.floor((double)(minutes / 1440))) * feePolicy.getMax_fee_per_day();
+		        fee_1 = (int) (Math.floor((double) 
+	    				(((minutes % 1440) - feePolicy.getBase_minutes()) / feePolicy.getUnit_minutes()))) * 
+	    				feePolicy.getHourly_fee() + feePolicy.getBase_fee();
+	    		if(fee_1 > feePolicy.getMax_fee_per_day()) {
+	    			fee = fee_0 + feePolicy.getMax_fee_per_day();
+	    		}else {
+	    			fee = fee_0 + fee_1;
+	    		}
+		    }else {
+		    	if (minutes > feePolicy.getBase_minutes()) {
+		    		fee_0 = (int) (Math.floor((double) 
+		    				((minutes - feePolicy.getBase_minutes()) / feePolicy.getUnit_minutes()))) * 
+		    				feePolicy.getHourly_fee() + feePolicy.getBase_fee();
+		    		if(fee_0 > feePolicy.getMax_fee_per_day()) {
+		    			fee = feePolicy.getMax_fee_per_day();
+		    		}else {
+		    			fee = fee_0;
+		    		}
+		    	}else {
+		    		fee = feePolicy.getBase_fee();
+		    	}
+		    }
+	    	
+	    }else {
+	    	// 출차하고자 하는 차량이 회원으로 등록된 차량인 경우.
+	    	user_check = true;
+	    }
+
+	    // parking_record 조회해서 PK 가져오기 (별도 메서드 필요)
+	    int parkingRecNum = mapper.selectRecordNumByCarNumAndInTime(car_num, inTime);
+	    if (parkingRecNum == 0) {
+	        out.println("<script>");
+	        out.println("alert('주차 기록이 없습니다.');");
+	        out.println("history.back();");
+	        out.println("</script>");
+	        return;
+	    }
+
+	    ParkingRecordDTO record = new ParkingRecordDTO();
+	    record.setParking_rec_num(parkingRecNum);
+	    record.setCar_num(car_num);
+	    record.setIn_time(inTime);
+	    record.setOut_time(outTime);
+	    record.setFee_amount(fee);
+
+	    int updateCount = mapper.record_out(record);
+
+	    if (updateCount > 0) {
+	        int delParking = mapper.out(car_num);           // parking 테이블 car_num null 처리
+
+	        if (delParking > 0) {
+	        	if(user_check == false) {
+	        		// 회원이 아닌 경우.
+	        		out.println("<script>");
+		            out.println("alert('출차 완료. 정산 금액 : " + fee + " 원');");
+		            out.println("location.href='/'");
+		            out.println("</script>");
+	        	}else {
+	        		// 회원인 경우.
+	        		out.println("<script>");
+		            out.println("alert('정기 결제 차량입니다. 정산 금액 : " + fee + " 원');");
+		            out.println("location.href='/'");
+		            out.println("</script>");
+	        	}
+	            
+	        } else {
+	            out.println("<script>");
+	            out.println("alert('출차 처리 오류');");
+	            out.println("history.back();");
+	            out.println("</script>");
+	        }
+	    } else {
+	        out.println("<script>");
+	        out.println("alert('주차 기록 업데이트 실패');");
+	        out.println("history.back();");
+	        out.println("</script>");
+	    }
+	}
