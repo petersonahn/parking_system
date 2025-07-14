@@ -1,0 +1,9 @@
+body 바로 아래에
+  
+<c:if test="${not empty loginMessage}">
+	    <script>
+	        alert('${loginMessage}');
+	    </script>
+	</c:if>
+
+추가
