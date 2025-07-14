@@ -1,0 +1,137 @@
+
+
+________________________________________________________________________________________________________________
+
+// user_management.jsp 추가
+
+
+<title>Insert title here</title>
+</head>
+<body>
+
+	<div class="main">
+		<div class="header">
+			<h2>회원 관리</h2>
+		</div>
+  *******************************************************************************************(이 부분 추가)**********************************************************************************
+		<h4>회원 차량 : ${paging.totalRecord } 대</h4>
+	*************************************************************************************************************************************************************************************
+		<c:set var="uList" value="${userList }" />
+		
+		<div class="list">
+			<table border="1">
+				<tr>
+					<th>회원 아이디</th>
+					<th>차량 번호</th>
+					<th>회원 이름</th>
+					<th>회원 연락처</th>
+				</tr>
+				
+				<c:forEach var="user" items="${uList }">
+					<tr class="user_button" 
+						data-user-id="${user.user_id}" 
+					    data-user-car-num="${user.user_car_num}"
+					    data-user-name="${user.user_name}" 
+					    data-user-phone="${user.user_phone}">
+					    
+						<td>${user.user_id }</td>
+						<td>${user.user_car_num }</td>
+						<td>${user.user_name }</td>
+						<td>${user.user_phone }</td>
+					</tr>
+				</c:forEach>
+			</table>
+			**********************************************************************************(여기부터 추가)**********************************************************************************
+			<br>
+	  <div align="center">
+	  	<!-- 페이징 버튼 영역 -->
+	  	<c:if test="${paging.page > paging.block }">
+	  		<a href="user_management.go?page=1">[맨 처음]</a>
+		    <a href="user_management.go?page=${paging.startBlock - 1 }">◀</a>
+		</c:if>
+		  
+		<c:forEach begin="${paging.startBlock}" end="${paging.endBlock}" var="i">
+	  		<c:if test="${i == paging.page}">
+	    		<b><a href="user_management.go?page=${i}">[${i}]</a></b>
+	  		</c:if>
+	  		
+	 		<c:if test="${i != paging.page}">
+	    		<a href="user_management.go?page=${i}">[${i}]</a>
+	  		</c:if>
+		</c:forEach>
+	
+		<c:if test="${paging.endBlock < paging.allPage}">
+	  		<a href="user_management.go?page=${paging.endBlock + 1}">▶</a>
+	  		<a href="user_management.go?page=${paging.allPage}">[맨 마지막]</a>
+		</c:if>
+		</div>
+		*************************************************************************************************************************************************************************************
+		</div>
+		<br>
+		
+		<div class="button">
+			<button onclick="showUserRegModal()">회원 등록</button>
+		</div>
+
+
+
+  ________________________________________________________________________________________________________________
+
+  // Mapper 추가
+
+  List<UsersDTO> userList(Page pdto);     ******(인자에 Page pdto 삽입)**********
+	
+	int ucount();                           ******(이 부분 추가)******
+
+
+  ________________________________________________________________________________________________________________
+
+  // ManagementController 해당 부분 복사 붙여넣기
+
+  @GetMapping("user_management.go")
+	public String userManage(@RequestParam(value = "page", defaultValue = "1") int page, Model model) {
+		
+		totalRecord = this.mapper.ucount();
+		
+		Page pdto = new Page(page, rowsize, totalRecord);
+		
+		List<UsersDTO> userList = this.mapper.userList(pdto);
+		
+		model.addAttribute("userList", userList)
+		     .addAttribute("paging", pdto);
+		
+		return "parking_management/user_management";
+	}
+
+
+  ________________________________________________________________________________________________________________
+
+  // parking.xml 해당 부분 복사 붙여넣기(기존의 userList 대체)
+
+
+  <select id="userList" parameterType="page" resultType="Users">
+	<![CDATA[
+  			select * from
+				(select row_number()
+					over(order by user_id) rnum, u.* from users u)
+						where rnum >= #{startNo} and rnum <= #{endNo}
+  		]]>
+	</select>
+
+********************************************(새로운 sql문 추가)**************************
+ <select id="ucount" resultType="int">
+		select count(*) from users
+	</select>
+
+
+
+  ________________________________________________________________________________________________________________
+
+
+
+
+  
+
+
+
+  ________________________________________________________________________________________________________________
