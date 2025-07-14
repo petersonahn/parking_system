@@ -1,0 +1,39 @@
+///      테이블에 parking_id 열 추가 
+
+alter table parking_record add parking_id Varchar2(10);
+
+ALTER TABLE parking_record
+ADD CONSTRAINT fk_parking_record_parking
+FOREIGN KEY (parking_id)
+REFERENCES parking(parking_id);    // 외래키 조건 추가 
+
+commit;
+
+
+
+///    parking.xml 쿼리문 수정 , 추가
+
+<insert id="record_in" parameterType="Record" useGeneratedKeys="false">
+        <selectKey keyProperty="parking_rec_num" resultType="java.lang.Integer" order="BEFORE">
+	        SELECT seq_parking_record.NEXTVAL FROM dual
+	    </selectKey>
+	    
+	    insert into parking_record(parking_rec_num, car_num, parking_id, in_time, out_time, user_id, fee_amount)
+	    values(#{parking_rec_num}, #{car_num}, #{parking_id, jdbcType=VARCHAR}, #{in_time, jdbcType=TIMESTAMP}, null, #{user_id}, 0)
+    </insert>
+
+ 
+
+<select id="getRecordsByCarNum" parameterType="String" resultType="Record">
+   						 SELECT parking_rec_num, car_num, parking_id, in_time, out_time, user_id, fee_amount
+   						 FROM parking_record WHERE car_num = #{carNum} ORDER BY in_time DESC
+	</select>
+
+
+현재 manager_detail.jsp 코드 수정중
+
+
+문제 1. db에 parking_id가 null 값으로 들어옴 
+
+문제 2. 문제 1로 인해 manager_detail.jsp 모달창의 값도 null로 들어옴 
+
