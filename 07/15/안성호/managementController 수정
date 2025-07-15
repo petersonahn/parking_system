@@ -1,0 +1,18 @@
+private void sendLoginAlertAndRedirect(HttpSession session, HttpServletResponse response) throws IOException {
+    	
+    	response.setContentType("text/html; charset=UTF-8");
+    	// 캐시 방지 헤더 추가
+    	response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    	response.setHeader("Pragma", "no-cache");
+    	response.setDateHeader("Expires", 0);
+    	
+        PrintWriter out = response.getWriter();
+    	
+    	if (!isLoggedIn(session)) {    
+    		out.println("<script>");
+    		out.println("alert('로그인 후 이용해주세요.');");
+    		out.println("window.location.href = 'manager_login.go';"); // location.href 앞에 window 추가.
+    		out.println("</script>");
+    		out.flush();
+        }
+    }
