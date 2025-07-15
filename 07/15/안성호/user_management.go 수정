@@ -1,0 +1,23 @@
+@GetMapping("user_management.go")
+public String userManage(@RequestParam(value = "page", defaultValue = "1") int page, 
+                         Model model, 
+                         HttpSession session,
+                         HttpServletResponse response) throws IOException {
+    if (!isLoggedIn(session)) {
+        sendLoginAlertAndRedirect(session, response);
+        return null;
+    }
+
+    totalRecord = this.mapper.ucount();
+
+    Page pdto = new Page(page, rowsize, totalRecord);
+    List<UsersDTO> userList = this.mapper.userList(pdto);
+
+    model.addAttribute("userList", userList)
+         .addAttribute("paging", pdto);
+
+    return "parking_management/user_management";
+}
+
+
+세션이 빠져있음
