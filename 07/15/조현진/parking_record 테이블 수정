@@ -1,0 +1,3 @@
+alter table parking_record add parking_id Varchar2(10);
+
+commit;
