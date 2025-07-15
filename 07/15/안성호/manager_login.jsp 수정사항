@@ -1,0 +1,5 @@
+<c:if test="${not empty loginMessage}">
+	    <script>
+	        alert('${loginMessage}');
+	    </script>
+	</c:if> 삭제
