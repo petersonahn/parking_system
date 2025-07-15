@@ -1,0 +1,5 @@
+@GetMapping("manager_login.go")
+    @ResponseStatus
+    public String loginForm() {
+        return "parking_management/manager_login";
+    }
