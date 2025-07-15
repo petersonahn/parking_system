@@ -1,0 +1,3 @@
+
+
+<h5>수익 총액 : <fmt:formatNumber value="${amountfee}" type="number"/> 원</h5>
