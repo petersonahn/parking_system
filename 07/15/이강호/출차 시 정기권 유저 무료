@@ -1,0 +1,36 @@
+
+
+
+// ParkingController 추가
+
+
+      long millis = outTime.getTime() - inTime.getTime();
+	    long minutes = millis / (1000 * 60);
+	    
+	    ParkingFeeDTO feePolicy = mapper.getFee();
+	    
+	    UsersDTO checkUser = this.mapper.user_info(car_num); **********************(추가)********************
+
+	    int fee = 0;
+	    
+	    if(checkUser != null) { ****************************************(여기서부터 끝까지 복사 붙여넣기)*********************************** (유저의 조건문 추가)
+	    
+	    }else {
+	    
+		    if (minutes > 1440) {
+		        fee = (int) (Math.floor((double) (minutes / 1440))) * feePolicy.getMax_fee_per_day();
+		    }else {
+		    	if (minutes > feePolicy.getBase_minutes()) {
+		    		fee = (int) (Math.floor((double) 
+		    				((minutes - feePolicy.getBase_minutes()) / feePolicy.getBase_minutes()))) * 
+		    				feePolicy.getHourly_fee() + feePolicy.getBase_fee();
+		    		
+		    	}else {
+		    		fee = feePolicy.getBase_fee();
+		    	}
+		    	
+		    }
+	    }
+
+
+    
