@@ -1,0 +1,11 @@
+# parking.xml에서
+<select id="car" resultType="Cars" parameterType="String">
+		select * from cars where car_num = #{car_num}
+	</select>
+ 삭제. (car_info와 통합)
+
+# ParkingController 의 choose_parking_spot.go에서
+
+CarsDTO car = this.mapper.car(car_num); 부분을 
+CarsDTO car = this.mapper.car_info(car_num);
+로 수정.
