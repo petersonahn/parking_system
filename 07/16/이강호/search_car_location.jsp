@@ -66,15 +66,12 @@
 		padding: 40px 20px;
 		flex-wrap: nowrap; 
 		overflow-x: auto;  
-		transform: scale(0.9);
+		transform: scale(1);
 	    transform-origin: top center; 
-	    height: auto;  
+	    height: 70%;  
 	}
 	
-	.scale-wrapper {
-	  transform-origin: top left;
-	  transition: transform 0.3s ease;
-	}
+	
 	
 	
 	
