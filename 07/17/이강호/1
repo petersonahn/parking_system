@@ -1,1 +1,287 @@
+_________________________________________________________________________________________________
+
+// parkingController 기존 @PostMapping("parking_out_ok.go")부분 전체 교체
+
+
+@PostMapping("parking_out_pay.go")
+	public String out_pay_ok(@RequestParam("car_num") String car_num,
+	                        Model model, HttpServletResponse response) throws IOException {
+
+		response.setContentType("text/html; charset=UTF-8");
+	    PrintWriter out = response.getWriter();
+
+	    Date inTime = mapper.selectInTimeByCarNum(car_num);
+	    
+	    
+	    if (inTime == null) {
+	        out.println("<script>");
+	        out.println("alert('입차 기록이 존재하지 않습니다.');");
+	        out.println("history.back();");
+	        out.println("</script>");
+	        return null;
+	    }
+
+	    Date outTime = new Date();
+
+	    long millis = outTime.getTime() - inTime.getTime();
+	    long minutes = millis / (1000 * 60);
+
+	    long pay_days = minutes / (24 * 60);
+	    long pay_hours = (minutes % (24 * 60)) / 60;
+	    long pay_minutes = minutes % 60;
+
+	    StringBuilder result = new StringBuilder();
+	    if (pay_days > 0) result.append(pay_days).append("일 ");
+	    if (pay_hours > 0) result.append(pay_hours).append("시간 ");
+	    result.append(pay_minutes).append("분");
+	    
+	    ParkingFeeDTO feePolicy = mapper.getFee();
+
+	    int fee = 0;
+	    int fee_0 = 0;
+	    int fee_1 = 0;
+	    
+	    
+	    UsersDTO user_info = this.mapper.user_info(car_num);
+	    
+	    if(user_info == null) {
+	    	// 출차하고자 하는 차량이 회원으로 등록된 차량이 아닌 경우.
+	    	
+	    	if (minutes > 1440) {
+		        fee_0 = (int)(Math.floor((double)(minutes / 1440))) * feePolicy.getMax_fee_per_day();
+		        fee_1 = (int) (Math.floor((double) 
+	    				((minutes % 1440) / feePolicy.getUnit_minutes()))) * feePolicy.getHourly_fee();
+	    		if(fee_1 > feePolicy.getMax_fee_per_day()) {
+	    			fee = fee_0 + feePolicy.getMax_fee_per_day();
+	    		}else {
+	    			fee = fee_0 + fee_1;
+	    		}
+		    }else {
+		    	if (minutes > feePolicy.getBase_minutes()) {
+		    		fee_0 = (int) (Math.floor((double) 
+		    				(minutes / feePolicy.getUnit_minutes()))) * feePolicy.getHourly_fee();
+		    		if(fee_0 > feePolicy.getMax_fee_per_day()) {
+		    			fee = feePolicy.getMax_fee_per_day();
+		    		}else {
+		    			fee = fee_0;
+		    		}
+		    	}else {
+		    		fee = feePolicy.getBase_fee();
+		    	}
+		    }
+	    	
+	    }
+
+	 // parking_record 조회해서 PK 가져오기 (별도 메서드 필요)
+	    int parkingRecNum = mapper.selectRecordNumByCarNumAndInTime(car_num, inTime);
+	    if (parkingRecNum == 0) {
+	        out.println("<script>");
+	        out.println("alert('주차 기록이 없습니다.');");
+	        out.println("history.back();");
+	        out.println("</script>");
+	    }
+
+	    ParkingRecordDTO record = new ParkingRecordDTO();
+	    record.setParking_rec_num(parkingRecNum);
+	    record.setCar_num(car_num);
+	    record.setIn_time(inTime);
+	    record.setOut_time(outTime);
+	    record.setFee_amount(fee);
+
+	
+	    if (user_info != null) {
+	    	
+	    	
+	    	int updateCount = mapper.record_out(record);
+	    		
+	    	int delParking = mapper.out(car_num);           // parking 테이블 car_num null 처리
+	    	
+	        out.println("<script>");
+	        out.println("alert('정기권 차량입니다. 안녕히가십시오.');");
+	        out.println("location.href='/';");
+	        out.println("</script>");
+	        out.flush();
+	        return null;
+	    }else {
+	    	// 회원이 아닌 경우
+	    	
+	    }
+	    
+	    String stayDuration = result.toString();
+	    
+	    
+	    model.addAttribute("record", record)
+	    .addAttribute("stayDuration", stayDuration)
+	    .addAttribute("fee_amount", fee);
+	    
+	    
+	    
+	    
+		return "parking_pay";
+	}
+	
+	
+	
+	
+	@PostMapping("parking_out_ok.go")
+	public void went_out_ok(@RequestParam("car_num") String car_num, 
+			@RequestParam("fee_amount") int fee,
+			HttpServletResponse response) throws IOException {
+
+		response.setContentType("text/html; charset=UTF-8");
+	    PrintWriter out = response.getWriter();
+	
+	    Date inTime = mapper.selectInTimeByCarNum(car_num);
+	    Date outTime = new Date();
+	    
+	    int parkingRecNum = mapper.selectRecordNumByCarNumAndInTime(car_num, inTime);
+
+	    ParkingRecordDTO record = new ParkingRecordDTO();
+	    record.setParking_rec_num(parkingRecNum);
+	    record.setCar_num(car_num);
+	    record.setIn_time(inTime);
+	    record.setOut_time(outTime);
+	    record.setFee_amount(fee);
+	    
+	    int updateCount = mapper.record_out(record);
+	    
+	    int delParking = mapper.out(car_num);           // parking 테이블 car_num null 처리
+
+	    out.println("<script>");
+        out.println("alert('결제 되었습니다. 안녕히가십시오.');");
+        out.println("location.href='/';");
+        out.println("</script>");
+	    
+	}
+
+_________________________________________________________________________________________________
+
+// parking_pay.jsp 생성
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>주차 정보</title>
+    <style>
+        body {
+            background-color: #f6f9fc;
+            font-family: 'Segoe UI', '맑은 고딕', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 60px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2d6ac0;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+    		border-spacing: 0;
+            border-radius: 12px;
+        }
+
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 14px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        th {
+            background-color: #3498db;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #f9f9f9;
+        }
+
+        .submit-btn {
+            display: block;
+            margin: 30px auto 0 auto;
+            padding: 14px 32px;
+            font-size: 16px;
+            background-color: #2d6ac0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.25s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #1c4f99;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>주차 정보 확인</h2>
+        <form method="post" action="<%=request.getContextPath() %>/parking_out_ok.go">
+        
+	    <input type="hidden" name="car_num" value="${record.car_num}" />
+	    <input type="hidden" name="fee_amount" value="${record.fee_amount}" />
+            <table>
+                <tr>
+                    <th>차량 번호</th>
+                    <th>입차 시간</th>
+                    <th>주차한 시간</th>
+                    <th>요금</th>
+                </tr>
+                <tr>
+                    <td>${record.car_num}</td>
+                    <td><fmt:formatDate value="${record.in_time}" pattern="yyyy-MM-dd HH:mm" /></td>
+                    <td>${stayDuration}</td>
+                    <td><fmt:formatNumber value="${record.fee_amount}" pattern="#,##0" /> 원</td>
+                </tr>
+            </table>
+            <input type="submit" class="submit-btn" value="결제하기">
+        </form>
+    </div>
+
+</body>
+</html>
+
+
+
+_________________________________________________________________________________________________
+
+// parking_out.jsp 수정
+
+
+		
+		<div class="body">
+			<form method="post" action="<%=request.getContextPath() %>/parking_out_pay.go"> ***********해당부분 주소를 parking_out_pay.go로 수정***************************************
+				<h3>출차할 차량 번호 입력</h3>
+				<input name="car_num" />
+				<button type="submit">출차</button>
+			</form>
+		</div>
+		
+
+
+
+_________________________________________________________________________________________________
+
+
+
 
